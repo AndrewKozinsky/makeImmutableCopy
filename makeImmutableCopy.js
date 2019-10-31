@@ -1,83 +1,79 @@
 /**
  * Функция создаёт неизменяемую копию (immutable) переданных данных.
  * @param {Object || Array} mainData — объект или массив где внутри есть объект, который должен быть скопирован.
- * @param {Object || Array} targetObj — объект или массив, который должен быть скопирован.
+ * @param {Object || Array} target — объект или массив, который должен быть скопирован.
  * @param {Object || Array} newData — в процессе работы функция создаёт объект или массив с копией. Это служебный аргумент. Сюда передавать ничего не нужно.
  * @returns {Object || Array} — функция возвращает неизменяемую копию.
  */
-function makeImmutableCopy(mainData, targetObj, newData) {
+function makeImmutableCopy(mainData, target, newData) {
 
-    // Если это массив
-    if(mainData instanceof Array) {
+    // Есть в mainData нет целевого объекта, то вернуть переданный mainData
+    if(!isDataHasTargetData(mainData, target)) return mainData;
 
-        // Есть в его структуре есть целевой объект
-        if(isDataHasTargetData(mainData, targetObj)) {
-            // Тогда скопировать массив и вставить как значение возвращаемого объекта
-            newData = mainData.concat();
-        }
+    // В mainData есть целевой объект...
 
-        // Перебрать все элементы массива
+    
+    // Если это массив...
+    if(toString.call(mainData) === "[object Array]") {
+
+        // Скопировать массив и вставить как значение возвращаемого объекта
+        newData = mainData.concat();
+
+        // Перебрать элементы массива
         for(let i = 0; i < newData.length; i++) {
             // Перебираемый элемент
             let elem = newData[i];
 
             // Если в структуре элемента массива есть целевой объект
-            if(isDataHasTargetData(elem, targetObj)) {
-                // Тогда заменить его на копию
-                newData[i] = makeImmutableCopy(elem, targetObj, newData)
-            }
+            newData[i] = makeImmutableCopy(elem, target, newData)
         }
     }
 
 
-    // Если это объект
-    if(mainData + '' === "[object Object]") {
+    // Если это объект...
+    if(toString.call(mainData) === "[object Object]") {
 
-        // Есть в его структуре есть целевой объект
-        if(isDataHasTargetData(mainData, targetObj)) {
-            // Тогда скопировать объект и вставить как значение возвращаемого объекта
-            newData = Object.assign({}, mainData);
-        }
+        // Скопировать объект и вставить как значение возвращаемого объекта
+        newData = Object.assign({}, mainData);
 
         // Перебрать все элементы объекта
         for(let key in mainData) {
             // Перебираемый элемент
             let elem = mainData[key];
 
-            // Если в структуре объекта есть целевой объект
-            if(isDataHasTargetData(elem, targetObj)) {
-                // Тогда заменить его на копию
-                mainData[key] = makeImmutableCopy(elem, targetObj, newData)
-            }
+            // Тогда заменить его на копию
+            newData[key] = makeImmutableCopy(elem, target, newData)
         }
     }
 
 
-    // Возвратить скопированные данные
+    // Если в newData что-то есть, то значит в mainData есть целевой объект и в newData находится неизменная копия
+    // Если же в newData ничего нет, то целевой объект не найден. Тогда возращается исходный объект
     return newData
 }
 
 
+
 /**
- * Функция проверяет есть ли в данных другие даные
+ * Функция проверяет есть ли в данных другие данные
  * @param {Object || Array} currentData — объект или массив где нужно найти другой объект.
- * @param {Object || Array} targetObj — объект, который может быть в currentData.
- * @returns {Boolean} — возвращает булево значение есть ли в currentData объект targetObj.
+ * @param {Object || Array} target — объект/массив, который может быть в currentData.
+ * @returns {Boolean} — возвращает булево значение есть ли в currentData объект targetData.
  */
-function isDataHasTargetData(currentData, targetObj) {
+function isDataHasTargetData(currentData, target) {
 
     // Если текущий объект равен целевому объекту, то вернуть правду
-    if(currentData === targetObj) return true;
+    if(currentData === target) return true;
+
 
     // Если это массив
-    if(currentData instanceof Array) {
+    if(toString.call(currentData) === "[object Array]") {
 
-        // Перебрать все элементы массива
+        // Перебрать все элементы массива...
         for(let i = 0; i < currentData.length; i++) {
-            // Перебираемый элемент
-            let elem = currentData[i];
 
-            if(isDataHasTargetData(elem, targetObj)) {
+            // ... и передать элемент на проверку.
+            if(isDataHasTargetData(currentData[i], target)) {
                 return true
             }
         }
@@ -85,16 +81,19 @@ function isDataHasTargetData(currentData, targetObj) {
 
 
     // Если это объект
-    if(currentData + '' === "[object Object]") {
+    if(toString.call(currentData) === "[object Object]") {
 
-        // Перебрать все элементы массива
+        // Перебрать все свойства объекта
         for(let key in currentData) {
-            // Перебираемый элемент
-            let elem = currentData[key];
 
-            if(isDataHasTargetData(elem, targetObj)) {
+            // ... и передать значение свойства на проверку.
+            if(isDataHasTargetData(currentData[key], target)) {
                 return true
             }
         }
     }
+
+
+    // Во всех остальных случаях вернуть ложь
+    return false
 }
