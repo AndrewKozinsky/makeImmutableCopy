@@ -1,18 +1,26 @@
 /**
- * Функция создаёт неизменяемую копию (immutable) переданных данных.
+ * Функция создаёт неизменяемую (immutable) копию переданных данных и заменяет один объект на переданный.
  * @param {Object || Array} mainData — объект или массив где внутри есть объект, который должен быть скопирован.
  * @param {Object || Array} target — объект или массив, который должен быть скопирован.
- * @param {Object || Array} newData — в процессе работы функция создаёт объект или массив с копией. Это служебный аргумент. Сюда передавать ничего не нужно.
- * @returns {Object || Array} — функция возвращает неизменяемую копию.
+ * @param {Object || Array} changedData — изменённый объект или массив
+ * @param {Object || Array} [newData] — в процессе работы функция создаёт объект или массив с копией. Это служебный аргумент. Сюда передавать ничего не нужно.
+ * @returns {Object || Array} — функция возвращает неизменяемую копию из аргумента mainData.
  */
-function makeImmutableCopy(mainData, target, newData) {
+function makeImmutableObj(mainData, target, changedData, newData) {
+
+    // Если mainData равен target, тогда вернуть изменённый объект
+    if(mainData === target) {
+        return changedData;
+    }
+
 
     // Есть в mainData нет целевого объекта, то вернуть переданный mainData
     if(!isDataHasTargetData(mainData, target)) return mainData;
 
+
     // В mainData есть целевой объект...
 
-    
+
     // Если это массив...
     if(toString.call(mainData) === "[object Array]") {
 
@@ -25,7 +33,7 @@ function makeImmutableCopy(mainData, target, newData) {
             let elem = newData[i];
 
             // Если в структуре элемента массива есть целевой объект
-            newData[i] = makeImmutableCopy(elem, target, newData)
+            newData[i] = makeImmutableObj(elem, target, changedData, newData)
         }
     }
 
@@ -42,13 +50,11 @@ function makeImmutableCopy(mainData, target, newData) {
             let elem = mainData[key];
 
             // Тогда заменить его на копию
-            newData[key] = makeImmutableCopy(elem, target, newData)
+            newData[key] = makeImmutableObj(elem, target, changedData, newData)
         }
     }
 
 
-    // Если в newData что-то есть, то значит в mainData есть целевой объект и в newData находится неизменная копия
-    // Если же в newData ничего нет, то целевой объект не найден. Тогда возращается исходный объект
     return newData
 }
 
